@@ -1,3 +1,4 @@
+
 CREATE VIEW vw_MesasAsignadasHoy AS
 SELECT 
     m.IdMesa,
@@ -12,10 +13,7 @@ FROM
     LEFT JOIN factura f ON f.IdMesa = m.IdMesa AND f.Estado = 'ABIERTA'
 WHERE 
     ma.Fecha = CAST(GETDATE() AS DATE);
-
-CREATE VIEW vw_mesas_asignadas_hoy as 
-SELECT * FROM MesasAsignadas WHERE Fecha = CAST(GETDATE() AS DATE)
-
+go
 CREATE VIEW vw_FacturacionDiariaDetallada AS
 SELECT 
     f.IdFactura,
@@ -33,7 +31,7 @@ FROM
     JOIN Mesas m ON f.IdMesa = m.IdMesa
 WHERE 
     f.Fecha = CAST(GETDATE() AS DATE) AND f.Estado = 'CERRADO';
-
+go
 CREATE VIEW VW_MesasConMasFacturacion AS
 SELECT 
     m.IdMesa,
@@ -43,7 +41,7 @@ FROM Ventas v
 JOIN Mesa m ON v.IdMesa = m.IdMesa
 GROUP BY m.IdMesa
 ORDER BY TotalFacturado DESC;
-
+go
 CREATE VIEW VW_PedidosPorDiaYHora AS
 SELECT 
     CONVERT(date, v.Fecha_venta) AS Fecha,
@@ -52,3 +50,4 @@ SELECT
 FROM Ventas v
 GROUP BY CONVERT(date, v.Fecha_venta), DATEPART(HOUR, v.Fecha_venta)
 ORDER BY Fecha, Hora;
+go

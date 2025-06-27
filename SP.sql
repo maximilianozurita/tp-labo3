@@ -1,61 +1,3 @@
-create procedure sp_IniciarSesion(
-	@Email varchar(250), 
-	@Contraseña varchar(50)
-)as
-begin
-	select IdUsuario, Nombre, Apellido, Email, Contrasenia, IdTipoUsuario from Usuario WHERE Email = @Email and  Contrasenia = @Contraseña
-end
-go
-
-create procedure sp_RegistarUsuariio(
-	@Email varchar(250),
-	@contraseña varchar(50),
-	@Nombre varchar(50),
-	@Apellido varchar(50)
-)AS 
-BEGIN 
-	insert into Usuario (Email, Contrasenia, IdTipoUsuario,Nombre,Apellido)
-	values (@Email,@contraseña,2,@Nombre,@Apellido)
-END
-go
-
-create or alter procedure sp_BuscarUsuario(
-	@Email varchar(250)
-)AS 
-BEGIN 
-	select u.IdUsuario from Usuario u where u.Email = @Email
-END
-GO
-
-create or alter procedure sp_ListarMesa(
-	@IdUsuario int
-)as
-begin
-	SELECT m.IdMesa as IdMesa , m.NumeroMesa, u.Nombre as NumeroMesa from Mesas m
-	inner join MesasAsignadas ma on ma.IdMesa = m.IdMesa
-	inner join Usuario u on u.IdUsuario = ma.IdUsuario
-	where u.IdUsuario = @IdUsuario and ma.Fecha = CAST(GETDATE() AS DATE)
-end
-GO 
-
-create or alter procedure sp_ListarMesasAsignadas
-as
-begin
-	SELECT  m.NumeroMesa as NumeroMesa,  ma.IdUsuario as IdUsuario, u.Nombre as Nombre, ma.Fecha as fecha, m.IdMesa as IdMesa from Mesas m 
-	left join (select * from MesasAsignadas ma2 where ma2.Fecha = CAST(GETDATE() AS DATE)) ma on m.IdMesa  = ma.IdMesa 
-	left join Usuario u on u.IdUsuario = ma.IdUsuario
-	select * from MesasAsignadas ma
-end
-GO 
-
-create or alter procedure sp_listarUsuario
-as
-begin
-	SELECT IdUsuario, Nombre from Usuario WHERE IdTipoUsuario = 2
-end
-go
-
-
 create or alter procedure sp_AsignarMesero(
 	@NumeroMesa int,
 	@IdMesero int
@@ -76,41 +18,6 @@ begin
 	END
 end
 GO 
-
-
-create or alter procedure sp_ExisteMesaAsignada(
-	@IdMesa int
-)as
-begin
-	select IdMesa from MesasAsignadas ma where Fecha = CAST(GETDATE() AS DATE) and IdMesa = @IdMesa
-end
-go
-
-create or alter procedure sp_listaMenu
-AS
-BEGIN 
-	select IdPlato, Nombre, Precio, Stock, Imagen, Estado from Menu where eliminado = 0
-END
-go
-
-create or alter procedure sp_CantidadMesasAsignadas
-AS 
-BEGIN 
-	select count(IdMesa) as MesasSinAsignar from MesasAsignadas ma where Fecha = CAST(GETDATE() AS DATE)
-END
-GO 
-
-create or alter procedure sp_ListarDetalle(
-	@IdMesa int,
-	@IdFactura int
-)AS 
-BEGIN 
-	select dm.IdDetalle as IdDetalle, m.Nombre as Nombre, m.Precio as Precio, f.IdMesa as IdMesa from DetalleMesa dm
-	inner join factura f on f.IdFactura = dm.IdFactura 
-	inner join Menu m on m.IdPlato = dm.IdPlato 
-	where f.IdMesa = @IdMesa and dm.IdFactura = @IdFactura
-END
-go
 
 create or alter procedure sp_AsignarPlato(
 	@IdPlato int,
@@ -141,22 +48,38 @@ begin
 	end
 end
 go
-	
-create or alter procedure sp_BuscarFactura(
-	@IdMesa int
+
+-- Ver si eliminar estos SP que son mas simples o pasarlos a Views
+create or alter procedure sp_ListarMesa(
+	@IdUsuario int
 )as
 begin
-	select IdFactura FROM factura f where f.Estado = 'ABIERTA' and f.IdMesa  = @IdMesa
+	SELECT m.IdMesa as IdMesa , m.NumeroMesa, u.Nombre as NumeroMesa from Mesas m
+	inner join MesasAsignadas ma on ma.IdMesa = m.IdMesa
+	inner join Usuario u on u.IdUsuario = ma.IdUsuario
+	where u.IdUsuario = @IdUsuario and ma.Fecha = CAST(GETDATE() AS DATE)
 end
-go
+GO 
 
-create or alter procedure sp_AgregarFactura(
+create or alter procedure sp_ListarMesasAsignadas
+as
+begin
+	SELECT  m.NumeroMesa as NumeroMesa,  ma.IdUsuario as IdUsuario, u.Nombre as Nombre, ma.Fecha as fecha, m.IdMesa as IdMesa from Mesas m 
+	left join (select * from MesasAsignadas ma2 where ma2.Fecha = CAST(GETDATE() AS DATE)) ma on m.IdMesa  = ma.IdMesa 
+	left join Usuario u on u.IdUsuario = ma.IdUsuario
+	select * from MesasAsignadas ma
+end
+GO 
+
+create or alter procedure sp_ListarDetalle(
 	@IdMesa int,
-	@IdUsuario int
+	@IdFactura int
 )AS 
 BEGIN 
-	insert into factura (IdMesa,IdUsuario,fecha)
-	values(@IdMesa,@IdUsuario,getdate())
+	select dm.IdDetalle as IdDetalle, m.Nombre as Nombre, m.Precio as Precio, f.IdMesa as IdMesa from DetalleMesa dm
+	inner join factura f on f.IdFactura = dm.IdFactura 
+	inner join Menu m on m.IdPlato = dm.IdPlato 
+	where f.IdMesa = @IdMesa and dm.IdFactura = @IdFactura
 END
 go
 
@@ -171,7 +94,6 @@ BEGIN
 	where IdMesa = @IdMesa
 END
 go
-
 
 create or alter procedure sp_AgregarInsumo(
 	@Precio int,
@@ -196,28 +118,6 @@ begin
 end
 go
 
-create or alter procedure sp_CargarInsum(
-	@IdInsumo int
-)as
-begin
-	select Nombre, Precio, Stock, Imagen, Estado from Menu
-	where IdPlato = @IdInsumo
-end
-go
-
-create or alter procedure sp_ModificarInsumo(
-	@Precio money,
-	@IdInsumo int,
-	@Estado bit,
-	@Stock int
-)as
-begin
-	update Menu
-	set Precio = @Precio, Stock = @Stock, Estado = @Estado
-	where IdPlato = @IdInsumo
-end
-go
-
 create or alter procedure sp_ListarTotalRecaudado
 as
 begin
@@ -235,15 +135,6 @@ begin
 	inner join Usuario u on f.IdUsuario = u.IdUsuario
 	where f.fecha = CAST(GETDATE() AS DATE)
 	group by u.Nombre, u.Apellido;
-end
-go
-
-create or alter procedure sp_AgregarMesas(
-	@NumeroMesa int
-)as
-begin
-	INSERT INTO Mesas (NumeroMesa)
-	values (@NumeroMesa);
 end
 go
 

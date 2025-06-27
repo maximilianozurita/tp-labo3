@@ -1,4 +1,3 @@
-
 CREATE TRIGGER TR_ValidarStockAlVender
 ON VentaProducto
 INSTEAD OF INSERT
