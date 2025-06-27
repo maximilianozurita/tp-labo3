@@ -26,3 +26,30 @@ BEGIN
         JOIN INSERTED i ON p.IdProducto = i.IdProducto;
     END
 END;
+
+CREATE TRIGGER trg_InsertVentaOnFacturaCerrada
+ON factura
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO Ventas (IdFactura, IdMesa, Fecha_venta, Suma_total)
+    SELECT 
+        f.IdFactura,
+        f.IdMesa,
+        f.Fecha,
+        ISNULL(SUM(dm.Precio), 0)
+    FROM 
+        inserted i
+        JOIN factura f ON i.IdFactura = f.IdFactura
+        LEFT JOIN DetalleMesa dm ON dm.IdFactura = f.IdFactura
+    WHERE 
+        i.Estado = 'CERRADO' AND 
+        EXISTS (
+            SELECT 1 FROM deleted d 
+            WHERE d.IdFactura = i.IdFactura AND d.Estado <> 'CERRADO'
+        )
+    GROUP BY f.IdFactura, f.IdMesa, f.Fecha;
+END;
+GO
