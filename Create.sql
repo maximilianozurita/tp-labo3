@@ -19,6 +19,15 @@ CREATE TABLE Usuario(
 );
 go
 
+CREATE TABLE Ventas (
+    IdVenta INT PRIMARY KEY IDENTITY(1,1),
+    IdFactura INT NOT NULL FOREIGN KEY REFERENCES factura(IdFactura),
+    IdMesa INT NOT NULL FOREIGN KEY REFERENCES Mesas(IdMesa),
+    Fecha_venta DATETIME NOT NULL,
+    Suma_total MONEY NOT NULL
+);
+go
+	
 CREATE table Mesas(
 	IdMesa int primary key NOT NULL identity(1,1),
 	NumeroMesa int unique
