@@ -1,32 +1,32 @@
+USE RESTO;
+go
 CREATE TRIGGER TR_ValidarStockAlVender
-ON VentaProducto
+ON DetalleMesas
 INSTEAD OF INSERT
 AS
 BEGIN
     IF EXISTS (
         SELECT 1
         FROM INSERTED i
-        JOIN Producto p ON i.IdProducto = p.IdProducto
-        WHERE i.Cantidad > p.Stock
+        JOIN ItemsDelMenu p ON i.IdPlato = p.IdPlato
+        WHERE i.Precio > 0 AND p.Stock < 1
     )
     BEGIN
         RAISERROR('No hay stock suficiente para uno o más productos.', 16, 1);
-        ROLLBACK;
-    END
-    ELSE
-    BEGIN
-        -- Insertar venta y actualizar stock
-        INSERT INTO VentaProducto (IdVenta, IdProducto, Cantidad)
-        SELECT IdVenta, IdProducto, Cantidad
-        FROM INSERTED;
+        RETURN;
+    END;
 
-        UPDATE p
-        SET p.Stock = p.Stock - i.Cantidad
-        FROM Producto p
-        JOIN INSERTED i ON p.IdProducto = i.IdProducto;
-    END
+    INSERT INTO DetalleMesas (IdPlato, IdFactura, Precio)
+    SELECT IdPlato, IdFactura, Precio
+    FROM INSERTED;
+
+    UPDATE p
+    SET p.Stock = p.Stock - 1
+    FROM ItemsDelMenu p
+    JOIN INSERTED i ON p.IdPlato = i.IdPlato;
 END;
-go
+GO
+
 CREATE TRIGGER trg_InsertVentaOnFacturaCerrada
 ON Facturas
 AFTER UPDATE
@@ -44,11 +44,11 @@ BEGIN
         inserted i
         JOIN Facturas f ON i.IdFactura = f.IdFactura
         LEFT JOIN DetalleMesas dm ON dm.IdFactura = f.IdFactura
+        JOIN deleted d ON d.IdFactura = i.IdFactura
     WHERE 
-        i.Estado = 'CERRADO' AND 
-        EXISTS (
-            SELECT 1 FROM deleted d 
-            WHERE d.IdFactura = i.IdFactura AND d.Estado <> 'CERRADO'
+        i.Estado = 'CERRADO' AND d.Estado <> 'CERRADO'
+        AND NOT EXISTS (
+            SELECT 1 FROM Ventas v WHERE v.IdFactura = i.IdFactura
         )
     GROUP BY f.IdFactura, f.IdMesa, f.Fecha;
 END;
