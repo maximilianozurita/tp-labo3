@@ -1,31 +1,29 @@
 USE RESTO;
 go
-CREATE TRIGGER TR_ValidarStockAlVender
-ON DetalleMesas
+CREATE OR ALTER TRIGGER TR_PrevenirFacturasDuplicadasAbiertas
+ON Facturas
 INSTEAD OF INSERT
 AS
 BEGIN
+    SET NOCOUNT ON;
+
     IF EXISTS (
         SELECT 1
-        FROM INSERTED i
-        JOIN ItemsDelMenu p ON i.IdPlato = p.IdPlato
-        WHERE i.Precio > 0 AND p.Stock < 1
+        FROM inserted i
+        JOIN Facturas f ON i.IdMesa = f.IdMesa
+        WHERE i.Estado = 'ABIERTA' AND f.Estado = 'ABIERTA'
     )
     BEGIN
-        RAISERROR('No hay stock suficiente para uno o más productos.', 16, 1);
+        RAISERROR('Ya existe una factura ABIERTA para esta mesa.', 16, 1);
         RETURN;
-    END;
+    END
 
-    INSERT INTO DetalleMesas (IdPlato, IdFactura, Precio)
-    SELECT IdPlato, IdFactura, Precio
-    FROM INSERTED;
-
-    UPDATE p
-    SET p.Stock = p.Stock - 1
-    FROM ItemsDelMenu p
-    JOIN INSERTED i ON p.IdPlato = i.IdPlato;
+    INSERT INTO Facturas (IdMesa, IdUsuario, Estado, Fecha)
+    SELECT IdMesa, IdUsuario, Estado, Fecha
+    FROM inserted;
 END;
 GO
+
 
 CREATE TRIGGER trg_InsertVentaOnFacturaCerrada
 ON Facturas
