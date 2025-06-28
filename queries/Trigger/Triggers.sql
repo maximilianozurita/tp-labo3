@@ -53,16 +53,3 @@ BEGIN
     GROUP BY f.IdFactura, f.IdMesa, f.Fecha;
 END;
 GO
-    
-CREATE TRIGGER TR_DesactivarItemSinStock
-ON ItemsDelMenu
-AFTER UPDATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    UPDATE ItemsDelMenu
-    SET Estado = 0
-    WHERE Stock = 0 AND Estado = 1;
-END;
-GO
