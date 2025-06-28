@@ -1,4 +1,5 @@
-
+use RESTO;
+go
 CREATE VIEW vw_MesasAsignadasHoy AS
 SELECT 
     m.IdMesa,
@@ -14,6 +15,7 @@ FROM
 WHERE 
     ma.Fecha = CAST(GETDATE() AS DATE);
 go
+
 CREATE VIEW vw_FacturacionDiariaDetallada AS
 SELECT 
     f.IdFactura,
@@ -32,16 +34,18 @@ FROM
 WHERE 
     f.Fecha = CAST(GETDATE() AS DATE) AND f.Estado = 'CERRADO';
 go
+
+-- Vistas extras
 CREATE VIEW VW_MesasConMasFacturacion AS
 SELECT 
     m.IdMesa,
-    COUNT(v.ID) AS CantidadVentas,
+    COUNT(v.IdMesa) AS CantidadVentas,
     SUM(v.SumaTotal) AS TotalFacturado
 FROM Ventas v
-JOIN Mesa m ON v.IdMesa = m.IdMesa
+JOIN Mesas m ON v.IdMesa = m.IdMesa
 GROUP BY m.IdMesa
-ORDER BY TotalFacturado DESC;
 go
+
 CREATE VIEW VW_PedidosPorDiaYHora AS
 SELECT 
     CONVERT(date, v.FechaVenta) AS Fecha,
@@ -49,5 +53,4 @@ SELECT
     COUNT(*) AS CantidadPedidos
 FROM Ventas v
 GROUP BY CONVERT(date, v.FechaVenta), DATEPART(HOUR, v.FechaVenta)
-ORDER BY Fecha, Hora;
 go
