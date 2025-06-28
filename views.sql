@@ -9,8 +9,8 @@ SELECT
 FROM 
     MesasAsignadas ma
     JOIN Mesas m ON ma.IdMesa = m.IdMesa
-    LEFT JOIN Usuario u ON ma.IdUsuario = u.IdUsuario
-    LEFT JOIN factura f ON f.IdMesa = m.IdMesa AND f.Estado = 'ABIERTA'
+    LEFT JOIN Usuarios u ON ma.IdUsuario = u.IdUsuario
+    LEFT JOIN Facturas f ON f.IdMesa = m.IdMesa AND f.Estado = 'ABIERTA'
 WHERE 
     ma.Fecha = CAST(GETDATE() AS DATE);
 go
@@ -24,10 +24,10 @@ SELECT
     dm.Precio,
     f.Fecha
 FROM 
-    factura f
-    JOIN Usuario u ON f.IdUsuario = u.IdUsuario
-    JOIN DetalleMesa dm ON f.IdFactura = dm.IdFactura
-    JOIN Menu me ON dm.IdPlato = me.IdPlato
+    Facturas f
+    JOIN Usuarios u ON f.IdUsuario = u.IdUsuario
+    JOIN DetalleMesas dm ON f.IdFactura = dm.IdFactura
+    JOIN ItemsDelMenu me ON dm.IdPlato = me.IdPlato
     JOIN Mesas m ON f.IdMesa = m.IdMesa
 WHERE 
     f.Fecha = CAST(GETDATE() AS DATE) AND f.Estado = 'CERRADO';
@@ -36,7 +36,7 @@ CREATE VIEW VW_MesasConMasFacturacion AS
 SELECT 
     m.IdMesa,
     COUNT(v.ID) AS CantidadVentas,
-    SUM(v.Suma_total) AS TotalFacturado
+    SUM(v.SumaTotal) AS TotalFacturado
 FROM Ventas v
 JOIN Mesa m ON v.IdMesa = m.IdMesa
 GROUP BY m.IdMesa
@@ -44,10 +44,10 @@ ORDER BY TotalFacturado DESC;
 go
 CREATE VIEW VW_PedidosPorDiaYHora AS
 SELECT 
-    CONVERT(date, v.Fecha_venta) AS Fecha,
-    DATEPART(HOUR, v.Fecha_venta) AS Hora,
+    CONVERT(date, v.FechaVenta) AS Fecha,
+    DATEPART(HOUR, v.FechaVenta) AS Hora,
     COUNT(*) AS CantidadPedidos
 FROM Ventas v
-GROUP BY CONVERT(date, v.Fecha_venta), DATEPART(HOUR, v.Fecha_venta)
+GROUP BY CONVERT(date, v.FechaVenta), DATEPART(HOUR, v.FechaVenta)
 ORDER BY Fecha, Hora;
 go

@@ -28,21 +28,21 @@ begin
 	declare @Stock int
 	declare @Precio money
 	
-	select @IdFactura = IdFactura from factura f where @IdMesa = IdMesa and f.Estado = 'ABIERTA'
+	select @IdFactura = IdFactura from Facturas f where @IdMesa = IdMesa and f.Estado = 'ABIERTA'
 	
-	select @Precio = m.Precio from Menu m 
+	select @Precio = m.Precio from ItemsDelMenu m 
 	WHERE m.IdPlato = @IdPlato
 	
-	insert into DetalleMesa (IdPlato,IdFactura,Precio) values (@IdPlato,@IdFactura,@Precio)
+	insert into DetalleMesas (IdPlato,IdFactura,Precio) values (@IdPlato,@IdFactura,@Precio)
 	
-	update Menu
+	update ItemsDelMenu
 	set stock = stock - 1
 	where IdPlato = @IdPlato
-	select @Stock = stock from menu
+	select @Stock = stock from ItemsDelMenu
 	where IdPlato = @IdPlato
 	if @Stock <= 0
 	begin
-		update Menu
+		update ItemsDelMenu
 		set Estado = 0, stock = 0
 		where IdPlato = @IdPlato
 	end
@@ -56,7 +56,7 @@ create or alter procedure sp_ListarMesa(
 begin
 	SELECT m.IdMesa as IdMesa , m.NumeroMesa, u.Nombre as NumeroMesa from Mesas m
 	inner join MesasAsignadas ma on ma.IdMesa = m.IdMesa
-	inner join Usuario u on u.IdUsuario = ma.IdUsuario
+	inner join Usuarios u on u.IdUsuario = ma.IdUsuario
 	where u.IdUsuario = @IdUsuario and ma.Fecha = CAST(GETDATE() AS DATE)
 end
 GO 
@@ -66,7 +66,7 @@ as
 begin
 	SELECT  m.NumeroMesa as NumeroMesa,  ma.IdUsuario as IdUsuario, u.Nombre as Nombre, ma.Fecha as fecha, m.IdMesa as IdMesa from Mesas m 
 	left join (select * from MesasAsignadas ma2 where ma2.Fecha = CAST(GETDATE() AS DATE)) ma on m.IdMesa  = ma.IdMesa 
-	left join Usuario u on u.IdUsuario = ma.IdUsuario
+	left join Usuarios u on u.IdUsuario = ma.IdUsuario
 	select * from MesasAsignadas ma
 end
 GO 
@@ -76,9 +76,9 @@ create or alter procedure sp_ListarDetalle(
 	@IdFactura int
 )AS 
 BEGIN 
-	select dm.IdDetalle as IdDetalle, m.Nombre as Nombre, m.Precio as Precio, f.IdMesa as IdMesa from DetalleMesa dm
-	inner join factura f on f.IdFactura = dm.IdFactura 
-	inner join Menu m on m.IdPlato = dm.IdPlato 
+	select dm.IdDetalle as IdDetalle, m.Nombre as Nombre, m.Precio as Precio, f.IdMesa as IdMesa from DetalleMesas dm
+	inner join Facturas f on f.IdFactura = dm.IdFactura 
+	inner join ItemsDelMenu m on m.IdPlato = dm.IdPlato 
 	where f.IdMesa = @IdMesa and dm.IdFactura = @IdFactura
 END
 go
@@ -89,7 +89,7 @@ CREATE or alter PROCEDURE sp_CerrarFactura(
 BEGIN 
 	declare @IdUsuario int;
 	select @IdUsuario = IdUsuario from MesasAsignadas where @IdMesa = IdMesa
-	UPDATE factura 
+	UPDATE Facturas 
 	set Estado = 'CERRADO'
 	where IdMesa = @IdMesa
 END
@@ -102,9 +102,9 @@ create or alter procedure sp_AgregarInsumo(
 	@Imagen varchar(250)
 )as
 begin
-	INSERT INTO Menu (Nombre, Precio, stock,imagen,estado)
+	INSERT INTO ItemsDelMenu (Nombre, Precio, stock,imagen,estado)
 	VALUES (@Nombre,@Precio,@Stock,@Imagen,1)
-	select * from Menu
+	select * from ItemsDelMenu
 end
 go
 
@@ -112,7 +112,7 @@ create or alter procedure sp_eliminarInsumo(
 	@IdInsumo int
 )as
 begin
-	update Menu
+	update ItemsDelMenu
 	set eliminado = 1
 	where IdPlato = @IdInsumo
 end
@@ -121,8 +121,8 @@ go
 create or alter procedure sp_ListarTotalRecaudado
 as
 begin
-	select isnull(sum(precio),0) as total from detalleMesa dm
-	inner join factura f on f.IdFactura = dm.IdFactura
+	select isnull(sum(precio),0) as total from DetalleMesas dm
+	inner join Facturas f on f.IdFactura = dm.IdFactura
 	where f.Fecha  = CAST(GETDATE() AS DATE) and f.Estado = 'CERRADO';
 end
 go
@@ -130,9 +130,9 @@ go
 create or alter procedure sp_DetalleMoso
 as
 begin
-	SELECT u.nombre +' '+u.Apellido as Nombre , sum(dm.precio) as Total, count(distinct(f.IdFactura)) as cantidadAtendida from factura f
-	inner join DetalleMesa dm on f.IdFactura = dm.IdFactura
-	inner join Usuario u on f.IdUsuario = u.IdUsuario
+	SELECT u.nombre +' '+u.Apellido as Nombre , sum(dm.precio) as Total, count(distinct(f.IdFactura)) as cantidadAtendida from Facturas f
+	inner join DetalleMesas dm on f.IdFactura = dm.IdFactura
+	inner join Usuarios u on f.IdUsuario = u.IdUsuario
 	where f.fecha = CAST(GETDATE() AS DATE)
 	group by u.Nombre, u.Apellido;
 end
@@ -141,8 +141,8 @@ go
 create or alter procedure sp_TotalMensual
 AS
 BEGIN 
-	select isnull(sum(precio),0) as total from detalleMesa dm
-	inner join factura f on f.IdFactura = dm.IdFactura
+	select isnull(sum(precio),0) as total from DetalleMesas dm
+	inner join Facturas f on f.IdFactura = dm.IdFactura
 	where MONTH(f.Fecha) = MONTH(GETDATE()) AND YEAR(f.Fecha) = YEAR(GETDATE()) AND f.Estado = 'CERRADO';
 END
 go
@@ -150,7 +150,7 @@ go
 create or alter procedure sp_MesasCerradasMensual
 AS 
 BEGIN 
-	select count((f.IdFactura)) as cantidadAtendida from factura f
+	select count((f.IdFactura)) as cantidadAtendida from Facturas f
 	where MONTH(f.Fecha) = MONTH(GETDATE()) AND YEAR(f.Fecha) = YEAR(GETDATE()) AND f.Estado = 'CERRADO';
 END
 go
@@ -158,6 +158,6 @@ go
 create or alter procedure sp_MesasCerradas
 AS 
 BEGIN 
-	select count((f.IdFactura)) as cantidadAtendida from factura f
+	select count((f.IdFactura)) as cantidadAtendida from Facturas f
 	where f.fecha = CAST(GETDATE() AS DATE) AND f.Estado = 'CERRADO';
 END

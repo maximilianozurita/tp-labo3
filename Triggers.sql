@@ -26,15 +26,15 @@ BEGIN
         JOIN INSERTED i ON p.IdProducto = i.IdProducto;
     END
 END;
-
+go
 CREATE TRIGGER trg_InsertVentaOnFacturaCerrada
-ON factura
+ON Facturas
 AFTER UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    INSERT INTO Ventas (IdFactura, IdMesa, Fecha_venta, Suma_total)
+    INSERT INTO Ventas (IdFactura, IdMesa, FechaVenta, SumaTotal)
     SELECT 
         f.IdFactura,
         f.IdMesa,
@@ -42,8 +42,8 @@ BEGIN
         ISNULL(SUM(dm.Precio), 0)
     FROM 
         inserted i
-        JOIN factura f ON i.IdFactura = f.IdFactura
-        LEFT JOIN DetalleMesa dm ON dm.IdFactura = f.IdFactura
+        JOIN Facturas f ON i.IdFactura = f.IdFactura
+        LEFT JOIN DetalleMesas dm ON dm.IdFactura = f.IdFactura
     WHERE 
         i.Estado = 'CERRADO' AND 
         EXISTS (
