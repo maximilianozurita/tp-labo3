@@ -40,10 +40,10 @@ go
 create table ItemsDelMenu (
 	IdPlato int primary key NOT NULL identity(1,1),	
 	Nombre varchar(50) not null unique,
-	Precio money not null,
-	stock int not null,
+	Precio money not null CHECK (Precio > 0),
+	stock int not null CHECK (stock > 0),
 	Imagen varchar(500),
-	estado bit not null,
+	estado bit not null DEFAULT 1,
 	eliminado BIT NOT NULL DEFAULT 0
 );
 go
